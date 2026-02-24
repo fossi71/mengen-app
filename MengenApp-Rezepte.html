@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MengenApp · Rezepte</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d1117;--s1:#161b27;--s2:#1c2233;--s3:#222840;
+  --bd:#252d42;--bd2:#3a4260;
+  --acc:#4dffa0;--acc3:#4f9fff;--acc4:#ffb84f;--acc5:#c084fc;
+  --txt:#e6eaf5;--txt2:#a8b3cc;--mut:#5a6480;
+  --ok:#4dffa0;--low:#ffb84f;--emp:#ff4f7a;
+  --fh:'Syne',sans-serif;--fm:'JetBrains Mono',monospace;
+  --r:14px;--rs:10px;--nav:68px;--hdr:60px;
+}
+[data-theme="night"]{--bg:#0d1117;--s1:#161b27;--s2:#1c2233;--s3:#222840;--bd:#252d42;--bd2:#3a4260;--txt:#e6eaf5;--txt2:#a8b3cc;--mut:#5a6480}
+[data-theme="day"]{--bg:#f0f2f7;--s1:#ffffff;--s2:#e8eaf2;--s3:#dde0ec;--bd:#d0d4e8;--bd2:#b0b8d8;--txt:#1a1e2e;--txt2:#4a5070;--mut:#8892b0}
+[data-theme="sepia"]{--bg:#f5f0e8;--s1:#fffdf6;--s2:#ede8da;--s3:#e0d8c8;--bd:#ccc4b0;--bd2:#b0a890;--txt:#2a2218;--txt2:#5a4e3a;--mut:#907a60}
+[data-accent="green"]{--acc:#4dffa0;--ok:#4dffa0}
+[data-accent="blue"]{--acc:#4f9fff;--ok:#4f9fff}
+[data-accent="purple"]{--acc:#c084fc;--ok:#c084fc}
+[data-accent="orange"]{--acc:#ffb84f;--ok:#ffb84f}
+[data-accent="pink"]{--acc:#ff6eb4;--ok:#ff6eb4}
+[data-accent="cyan"]{--acc:#22d3ee;--ok:#22d3ee}
+
+html,body{height:100%;overflow:hidden;font-family:var(--fm);background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
+button{touch-action:manipulation;cursor:pointer}
+.no-select{user-select:none;-webkit-user-select:none}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;height:100dvh}
+.safe-top{height:env(safe-area-inset-top,0px);background:var(--s1);flex-shrink:0}
+
+/* ── HEADER ── */
+.hdr{height:var(--hdr);background:var(--s1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;z-index:20}
+.logo{font-family:var(--fh);font-size:1.2rem;font-weight:800;letter-spacing:-.02em;flex:1;user-select:none}
+.logo .dot{color:var(--acc)}
+.logo .sub{color:var(--acc5);font-size:.7rem;font-weight:600;display:block;letter-spacing:.08em;text-transform:uppercase;margin-top:-2px}
+.hbtn{width:40px;height:40px;border-radius:12px;background:var(--s2);border:1px solid var(--bd);color:var(--txt2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;transition:.12s}
+.hbtn:active{transform:scale(.9);background:var(--s3)}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--bd);padding:0 6px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;user-select:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{font-family:var(--fh);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:10px 12px;border-bottom:2px solid transparent;color:var(--mut);background:transparent;border-top:none;border-left:none;border-right:none;white-space:nowrap;transition:.15s;flex-shrink:0}
+.tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+.tab.recipe-tab.active{color:var(--acc5);border-bottom-color:var(--acc5)}
+.tab.shop-tab.active{color:var(--acc4);border-bottom-color:var(--acc4)}
+
+/* ── SCROLL ── */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scrollbar-width:none;touch-action:pan-y}
+.scroll::-webkit-scrollbar{display:none}
+.view{display:none;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px));gap:12px;flex-direction:column;min-height:100%}
+.view.active{display:flex}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sc{background:var(--s1);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 6px;text-align:center;position:relative;overflow:hidden;user-select:none}
+.sc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.sc.ca::after{background:var(--acc3)}.sc.co::after{background:var(--ok)}.sc.cl::after{background:var(--low)}.sc.ce::after{background:var(--emp)}
+.sc-v{font-family:var(--fh);font-size:1.4rem;font-weight:800;line-height:1}
+.sc.ca .sc-v{color:var(--acc3)}.sc.co .sc-v{color:var(--ok)}.sc.cl .sc-v{color:var(--low)}.sc.ce .sc-v{color:var(--emp)}
+.sc-l{font-size:.55rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-top:2px}
+
+/* ── SEARCH / FILTER ── */
+.sbar{display:flex;gap:8px}
+.sw{flex:1;position:relative}
+.sw input{width:100%;padding:11px 12px 11px 36px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--rs);color:var(--txt);font-family:var(--fm);font-size:.88rem;outline:none;-webkit-appearance:none;transition:border-color .15s}
+.sw input:focus{border-color:var(--acc)}
+.si{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mut);font-size:1rem;pointer-events:none}
+.fbtn{width:44px;height:44px;border-radius:var(--rs);background:var(--s1);border:1px solid var(--bd);color:var(--txt2);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;transition:.15s}
+.fbtn:active{transform:scale(.9)}
+.fbtn.on{border-color:var(--acc);color:var(--acc)}
+.fp{background:var(--s1);border:1px solid var(--bd);border-radius:var(--rs);padding:12px;display:none;gap:8px;flex-direction:column}
+.fp.open{display:flex}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--fm);font-size:.7rem;padding:5px 12px;border-radius:20px;border:1px solid var(--bd2);color:var(--txt2);background:var(--s2);transition:.15s;white-space:nowrap;user-select:none}
+.chip:active{transform:scale(.95)}
+.chip.on{border-color:var(--acc);color:var(--acc);background:rgba(77,255,160,.08)}
+.chip.on-low{border-color:var(--low);color:var(--low);background:rgba(255,184,79,.08)}
+.chip.on-emp{border-color:var(--emp);color:var(--emp);background:rgba(255,79,122,.08)}
+.flbl{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)}
+
+/* ── ITEM CARDS ── */
+.ilist{display:flex;flex-direction:column;gap:8px}
+.icard{background:var(--s1);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;animation:su .2s ease}
+@keyframes su{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.ic-top{display:flex;align-items:flex-start;gap:8px}
+.ic-info{flex:1;min-width:0}
+.ic-name{font-family:var(--fh);font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;user-select:none}
+.ic-cat{font-size:.65rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;user-select:none}
+.ic-acts{display:flex;gap:4px;align-items:center}
+.ab{width:32px;height:32px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--mut);display:flex;align-items:center;justify-content:center;font-size:1rem;transition:.12s;flex-shrink:0;padding:0}
+.ab:active{transform:scale(.88)}
+.ab.e:active{border-color:var(--acc3);color:var(--acc3);background:rgba(79,159,255,.1)}
+.ab.d:active{border-color:var(--emp);color:var(--emp);background:rgba(255,79,122,.1)}
+.badge{font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:20px;flex-shrink:0;user-select:none}
+.badge.ok{background:rgba(77,255,160,.1);color:var(--ok)}
+.badge.low{background:rgba(255,184,79,.1);color:var(--low)}
+.badge.empty{background:rgba(255,79,122,.1);color:var(--emp)}
+.ic-mid{display:flex;align-items:center;gap:10px;margin-top:10px}
+.stepper{display:flex;align-items:center;background:var(--s2);border:1px solid var(--bd);border-radius:10px;overflow:hidden;flex-shrink:0;user-select:none}
+.sbtn{width:40px;height:36px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--txt2);border:none;background:transparent;transition:.1s}
+.sbtn:active{background:var(--bd2)}
+.sbtn.m:active{color:var(--emp)}.sbtn.p:active{color:var(--ok)}
+.qdsp{min-width:50px;text-align:center;font-family:var(--fh);font-size:1.05rem;font-weight:800;border-left:1px solid var(--bd);border-right:1px solid var(--bd);height:36px;display:flex;align-items:center;justify-content:center;gap:3px;user-select:none}
+.qu{font-family:var(--fm);font-size:.58rem;color:var(--mut);font-weight:400}
+.prog{flex:1}
+.pt{height:4px;background:var(--s2);border-radius:2px;overflow:hidden}
+.pf{height:100%;border-radius:2px;transition:width .4s ease}
+.pf.ok{background:var(--ok)}.pf.low{background:var(--low)}.pf.empty{background:var(--emp)}
+.pl{font-size:.57rem;color:var(--mut);margin-top:3px;text-align:right;user-select:none}
+
+/* ── RECIPE CARDS ── */
+.rlist{display:flex;flex-direction:column;gap:10px}
+.rcard{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;animation:su .2s ease}
+.rcard-img{width:100%;height:160px;object-fit:cover;display:block;background:var(--s2)}
+.rcard-img-placeholder{width:100%;height:120px;display:flex;align-items:center;justify-content:center;background:var(--s2);color:var(--mut);font-size:2rem;cursor:pointer;border-bottom:1px solid var(--bd);transition:background .15s;position:relative;overflow:hidden}
+.rcard-img-placeholder:active{background:var(--s3)}
+.rcard-img-placeholder .add-img-hint{font-family:var(--fh);font-size:.65rem;color:var(--mut);display:block;margin-top:6px}
+.rcard-top{padding:14px 14px 0}
+.rcard-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.rcard-info{flex:1;min-width:0}
+.rcard-name{font-family:var(--fh);font-size:1rem;font-weight:800;margin-bottom:2px;user-select:none}
+.rcard-desc{font-size:.7rem;color:var(--txt2);line-height:1.5;user-select:none}
+.rcard-avail{font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;flex-shrink:0;align-self:flex-start;white-space:nowrap;user-select:none}
+.rcard-avail.yes{background:rgba(77,255,160,.1);color:var(--ok)}
+.rcard-avail.partial{background:rgba(255,184,79,.1);color:var(--low)}
+.rcard-avail.no{background:rgba(255,79,122,.1);color:var(--emp)}
+.portion-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--s2);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);user-select:none}
+.portion-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);flex:1}
+.portion-ctrl{display:flex;align-items:center;background:var(--s3);border:1px solid var(--bd2);border-radius:8px;overflow:hidden}
+.psbtn{width:34px;height:30px;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--txt2);border:none;background:transparent;transition:.1s}
+.psbtn:active{background:var(--bd2)}
+.pval{min-width:40px;text-align:center;font-family:var(--fh);font-size:.9rem;font-weight:800;color:var(--acc5);border-left:1px solid var(--bd2);border-right:1px solid var(--bd2);height:30px;display:flex;align-items:center;justify-content:center}
+.ingr-list{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.ingr-row{display:flex;align-items:center;gap:8px}
+.ingr-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ingr-dot.ok{background:var(--ok)}.ingr-dot.low{background:var(--low)}.ingr-dot.empty{background:var(--emp)}.ingr-dot.na{background:var(--mut)}
+.ingr-name{flex:1;font-size:.82rem;color:var(--txt)}
+.ingr-need{font-size:.75rem;font-family:var(--fh);font-weight:700}
+.ingr-need.ok{color:var(--ok)}.ingr-need.low{color:var(--low)}.ingr-need.empty{color:var(--emp)}.ingr-need.na{color:var(--mut)}
+.ingr-stock{font-size:.65rem;color:var(--mut)}
+
+/* ── STEPS ── */
+.steps-section{border-top:1px solid var(--bd);padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.steps-hd{font-family:var(--fh);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.plan-btn{font-size:.65rem;color:var(--acc5);padding:3px 10px;border:1px solid rgba(192,132,252,.3);border-radius:20px;background:rgba(192,132,252,.06);font-family:var(--fm);transition:.15s}
+.plan-btn:active{background:rgba(192,132,252,.15)}
+.step-row{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--bd)}
+.step-row:last-child{border-bottom:none}
+.step-circle{width:24px;height:24px;border-radius:50%;background:var(--s2);border:2px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:.65rem;font-weight:800;color:var(--acc5);flex-shrink:0;margin-top:1px;user-select:none}
+.step-body{flex:1;min-width:0}
+.step-title{font-size:.85rem;font-weight:500;color:var(--txt);margin-bottom:2px}
+.step-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:3px}
+.step-tag{font-size:.62rem;padding:2px 7px;border-radius:10px;font-family:var(--fm);user-select:none}
+.step-tag.work{background:rgba(79,159,255,.12);color:var(--acc3)}
+.step-tag.wait{background:rgba(255,184,79,.12);color:var(--low)}
+.step-tag.night{background:rgba(192,132,252,.12);color:var(--acc5)}
+.step-note{font-size:.7rem;color:var(--mut);margin-top:2px;font-style:italic}
+.step-timer-btn{width:30px;height:30px;border-radius:8px;background:rgba(79,159,255,.1);border:1px solid rgba(79,159,255,.3);color:var(--acc3);font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.step-timer-btn:active{transform:scale(.9);background:rgba(79,159,255,.2)}
+
+/* ── RECIPE ACTIONS ── */
+.rcard-acts{display:flex;gap:0;border-top:1px solid var(--bd)}
+.ract{flex:1;height:44px;background:transparent;border:none;border-right:1px solid var(--bd);color:var(--txt2);font-family:var(--fm);font-size:.68rem;display:flex;align-items:center;justify-content:center;gap:4px;transition:.12s}
+.ract:last-child{border-right:none}
+.ract:active{background:var(--s2)}
+.ract.cook:active{color:var(--acc5)}
+.ract.shop:active{color:var(--acc4)}
+.ract.share:active{color:var(--acc)}
+.ract.edit:active{color:var(--acc3)}
+.ract.del:active{color:var(--emp)}
+
+/* ── SHARE SHEET ── */
+.share-sheet-body{padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.share-preview{background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:14px;display:flex;flex-direction:column;gap:10px}
+.share-preview-img{width:100%;height:140px;object-fit:cover;border-radius:var(--rs);display:block}
+.share-preview-name{font-family:var(--fh);font-size:1rem;font-weight:800}
+.share-preview-meta{font-size:.72rem;color:var(--txt2)}
+.share-text-area{padding:10px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);font-family:var(--fm);font-size:.75rem;color:var(--txt2);line-height:1.6;max-height:200px;overflow-y:auto;white-space:pre-wrap;user-select:text;-webkit-user-select:text}
+.share-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.share-btn{height:48px;border-radius:12px;border:1px solid var(--bd2);background:var(--s2);color:var(--txt);font-family:var(--fh);font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.share-btn:active{transform:scale(.95)}
+.share-btn.primary{background:var(--acc);color:#0d1117;border-color:var(--acc)}
+
+/* ── SHOPPING LIST ── */
+.shop-header{display:flex;align-items:center;gap:10px}
+.shop-title{font-family:var(--fh);font-size:1rem;font-weight:800;flex:1;user-select:none}
+.shop-clear{font-size:.7rem;color:var(--acc4);padding:6px 12px;border:1px solid rgba(255,184,79,.3);border-radius:20px;background:rgba(255,184,79,.06);transition:.15s;font-family:var(--fm)}
+.shop-clear:active{transform:scale(.95)}
+.shoplist{display:flex;flex-direction:column;gap:8px}
+.shop-cat-group{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.shop-cat-hd{padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--bd);font-family:var(--fh);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--txt2);user-select:none}
+.shop-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--bd);transition:background .12s}
+.shop-item:last-child{border-bottom:none}
+.shop-item.done{opacity:.45}
+.shop-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--bd2);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s}
+.shop-item.done .shop-check{background:var(--acc4);border-color:var(--acc4);color:#0d1117}
+.shop-item-info{flex:1;min-width:0}
+.shop-item-name{font-size:.85rem;font-weight:500}
+.shop-item.done .shop-item-name{text-decoration:line-through;color:var(--mut)}
+.shop-item-detail{font-size:.65rem;color:var(--mut);margin-top:1px}
+.shop-qty{font-family:var(--fh);font-size:.9rem;font-weight:700;color:var(--acc4);user-select:none}
+.shop-del{color:var(--mut);padding:4px 6px;font-size:.85rem;transition:color .12s}
+.shop-del:active{color:var(--emp)}
+.shop-summary{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:14px}
+.shop-sum-row{display:flex;justify-content:space-between;align-items:center;font-size:.8rem}
+.shop-sum-row+.shop-sum-row{margin-top:6px;padding-top:6px;border-top:1px solid var(--bd)}
+.shop-sum-lbl{color:var(--mut)}
+.shop-sum-val{font-family:var(--fh);font-weight:700;color:var(--acc4)}
+
+/* ── IO TAB ── */
+.io-card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
+.io-title{font-family:var(--fh);font-size:.85rem;font-weight:700}
+.io-btn{width:100%;height:44px;border-radius:10px;background:var(--s2);border:1px solid var(--bd2);color:var(--txt);font-family:var(--fh);font-size:.82rem;font-weight:700}
+.io-btn:active{background:var(--s3)}
+.io-desc{font-size:.75rem;color:var(--txt2);line-height:1.6}
+.io-paste{width:100%;min-height:80px;padding:12px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);color:var(--txt);font-family:var(--fm);font-size:.78rem;outline:none;resize:vertical;line-height:1.5;-webkit-appearance:none}
+.io-paste:focus{border-color:var(--acc5)}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:calc(var(--nav) + env(safe-area-inset-bottom,0px) + 16px);right:16px;width:56px;height:56px;border-radius:16px;background:var(--acc);color:#0d1117;border:none;font-size:1.6rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:.15s;z-index:30;font-family:var(--fh);font-weight:800}
+.fab:active{transform:scale(.9)}
+.fab.recipe{background:var(--acc5);color:#fff}
+.fab.shop{background:var(--acc4);color:#0d1117}
+
+/* ── BOTTOM NAV ── */
+.bnav{height:var(--nav);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--s1);border-top:1px solid var(--bd);display:flex;flex-shrink:0;z-index:20;user-select:none}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:transparent;border:none;color:var(--mut);transition:color .15s;padding-top:4px}
+.ni.active{color:var(--acc)}
+.ni.recipe.active{color:var(--acc5)}
+.ni.shop.active{color:var(--acc4)}
+.ni-ic{font-size:1.25rem;line-height:1;transition:transform .15s}
+.ni.active .ni-ic{transform:scale(1.1)}
+.ni-lb{font-size:.55rem;text-transform:uppercase;letter-spacing:.06em;font-family:var(--fm)}
+
+/* ── BOTTOM SHEET ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px)}
+.overlay.open{opacity:1;pointer-events:all}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-radius:20px 20px 0 0;border-top:1px solid var(--bd2);z-index:50;transform:translateY(110%);transition:transform .32s cubic-bezier(.32,.72,0,1);padding-bottom:max(20px,env(safe-area-inset-bottom,0px));max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet.open{transform:translateY(0)}
+.sh-handle{width:36px;height:4px;background:var(--bd2);border-radius:2px;margin:12px auto 0}
+.sh-title{font-family:var(--fh);font-size:1.05rem;font-weight:800;padding:14px 18px 0}
+.sh-body{padding:14px 18px;display:flex;flex-direction:column;gap:11px}
+.sf{display:flex;flex-direction:column;gap:4px}
+.sf label{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)}
+.sf input,.sf select,.sf textarea{padding:12px 13px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);color:var(--txt);font-family:var(--fm);font-size:.88rem;outline:none;-webkit-appearance:none;width:100%;transition:border-color .15s}
+.sf input:focus,.sf select:focus,.sf textarea:focus{border-color:var(--acc5)}
+.sf textarea{resize:none;min-height:70px;line-height:1.5}
+.sf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sh-acts{display:flex;gap:10px;padding:4px 18px 6px}
+.shbtn{flex:1;height:50px;border-radius:12px;font-family:var(--fh);font-size:.88rem;font-weight:700;transition:.15s}
+.shbtn:active{transform:scale(.96)}
+.shbtn.p{background:var(--acc5);color:#fff;border:none}
+.shbtn.s{background:var(--s2);color:var(--txt2);border:1px solid var(--bd2)}
+
+/* Image upload in recipe sheet */
+.img-upload-zone{border:2px dashed var(--bd2);border-radius:var(--rs);overflow:hidden;position:relative;background:var(--s2);min-height:100px;display:flex;align-items:center;justify-content:center;transition:border-color .15s}
+.img-upload-zone.has-img{border-color:var(--acc5)}
+.img-upload-preview{width:100%;max-height:180px;object-fit:cover;display:block}
+.img-upload-hint{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--mut);padding:20px;text-align:center;pointer-events:none}
+.img-upload-hint .emoji{font-size:1.8rem}
+.img-upload-hint span{font-size:.75rem}
+.img-upload-inp{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.img-remove-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:.8rem;display:flex;align-items:center;justify-content:center;z-index:2}
+.img-remove-btn:active{transform:scale(.9)}
+
+/* Ingredient editor */
+.ingr-editor,.step-editor{display:flex;flex-direction:column;gap:6px}
+.ingr-edit-row{display:flex;gap:6px;align-items:center;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:8px 10px;animation:su .15s ease}
+.ingr-edit-row select,.ingr-edit-row input{background:transparent;border:none;color:var(--txt);font-family:var(--fm);font-size:.82rem;outline:none;padding:0;-webkit-appearance:none}
+.ingr-edit-row select{flex:1;min-width:0}
+.ingr-edit-row input{width:64px;text-align:right}
+.ingr-edit-row .iunit{font-size:.65rem;color:var(--mut);white-space:nowrap}
+.ingr-rm,.step-rm{color:var(--mut);font-size:1.1rem;padding:2px 4px;flex-shrink:0;transition:color .1s}
+.ingr-rm:active,.step-rm:active{color:var(--emp)}
+.add-ingr-btn,.add-step-btn{width:100%;height:38px;border-radius:8px;background:rgba(192,132,252,.08);border:1px dashed rgba(192,132,252,.3);color:var(--acc5);font-family:var(--fm);font-size:.78rem;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.add-ingr-btn:active,.add-step-btn:active{background:rgba(192,132,252,.15)}
+
+/* Step editor */
+.step-edit-card{background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;display:flex;flex-direction:column;gap:8px;animation:su .15s ease}
+.step-edit-top{display:flex;gap:8px;align-items:center}
+.step-edit-num{font-family:var(--fh);font-size:.75rem;font-weight:800;color:var(--acc5);min-width:22px}
+.step-edit-name{flex:1;background:transparent;border:none;border-bottom:1px solid var(--bd2);color:var(--txt);font-family:var(--fm);font-size:.85rem;padding:3px 0;outline:none;-webkit-appearance:none}
+.step-edit-name:focus{border-bottom-color:var(--acc5)}
+.step-edit-times{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step-time-field{display:flex;flex-direction:column;gap:3px}
+.step-time-label{font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.step-time-wrap{display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--bd);border-radius:7px;padding:5px 9px}
+.step-time-wrap input{background:transparent;border:none;color:var(--txt);font-family:var(--fm);font-size:.82rem;width:44px;outline:none;text-align:right;-webkit-appearance:none}
+.step-time-wrap .tu{font-size:.65rem;color:var(--mut)}
+.step-overnight{display:flex;align-items:center;gap:8px;padding:4px 0}
+.step-overnight label{font-size:.72rem;color:var(--txt2);flex:1}
+.step-overnight input[type=checkbox]{width:18px;height:18px;accent-color:var(--acc5)}
+.step-note-input{background:transparent;border:none;border-bottom:1px solid var(--bd);color:var(--txt2);font-family:var(--fm);font-size:.75rem;padding:3px 0;outline:none;width:100%;-webkit-appearance:none}
+.step-note-input:focus{border-bottom-color:var(--acc5)}
+
+/* ── CATEGORY COMBO ── */
+.cat-combo-wrap{display:flex;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;transition:border-color .15s}
+.cat-combo-wrap:focus-within{border-color:var(--acc5)}
+.cat-combo-select{flex:1;background:transparent;border:none;color:var(--txt);font-family:var(--fm);font-size:.88rem;padding:12px 10px;outline:none;-webkit-appearance:none}
+.cat-combo-select option{background:var(--s1)}
+.cat-combo-sep{width:1px;background:var(--bd);align-self:stretch;margin:8px 0;flex-shrink:0}
+.cat-combo-new{background:transparent;border:none;color:var(--acc5);font-size:.75rem;font-family:var(--fm);padding:0 12px;white-space:nowrap;flex-shrink:0}
+.cat-combo-new:active{opacity:.7}
+.cat-new-row{display:none;gap:6px}
+.cat-new-row.open{display:flex}
+.cat-new-row input{flex:1;padding:10px 12px;background:var(--bg);border:1px solid var(--acc5);border-radius:var(--rs);color:var(--txt);font-family:var(--fm);font-size:.85rem;outline:none;-webkit-appearance:none}
+.cat-new-confirm{background:var(--acc5);color:#fff;border:none;border-radius:var(--rs);padding:0 14px;font-family:var(--fh);font-size:.8rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+.cat-new-confirm:active{opacity:.8}
+.cat-new-cancel{background:var(--s2);color:var(--mut);border:1px solid var(--bd);border-radius:var(--rs);padding:0 10px;font-size:.85rem;flex-shrink:0}
+
+/* ── BACKPLAN PANEL ── */
+.plan-panel{position:fixed;inset:0;z-index:65;display:flex;align-items:flex-end;pointer-events:none;opacity:0;transition:opacity .25s}
+.plan-panel.open{pointer-events:all;opacity:1}
+.plan-overlay{position:absolute;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px)}
+.plan-sheet{position:relative;width:100%;background:var(--s1);border-radius:20px 20px 0 0;border-top:1px solid var(--bd2);padding-bottom:max(24px,env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1);max-height:92dvh;overflow-y:auto}
+.plan-panel.open .plan-sheet{transform:translateY(0)}
+.plan-handle{width:36px;height:4px;background:var(--bd2);border-radius:2px;margin:12px auto 0}
+.plan-title{font-family:var(--fh);font-size:1rem;font-weight:800;padding:14px 18px 0;color:var(--txt)}
+.plan-body{padding:14px 18px;display:flex;flex-direction:column;gap:14px}
+.plan-section-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);margin-bottom:6px;user-select:none}
+.plan-day-row{display:flex;gap:8px;align-items:center;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:10px 12px}
+.plan-day-name{font-family:var(--fh);font-size:.78rem;font-weight:700;color:var(--txt);min-width:90px;user-select:none}
+.plan-time-inputs{display:flex;gap:6px;align-items:center;flex:1}
+.plan-time-inputs input{background:var(--bg);border:1px solid var(--bd);border-radius:7px;color:var(--txt);font-family:var(--fm);font-size:.82rem;padding:5px 8px;outline:none;width:80px;-webkit-appearance:none}
+.plan-time-inputs input:focus{border-color:var(--acc5)}
+.plan-time-sep{color:var(--mut);font-size:.75rem;user-select:none}
+.plan-toggle{width:36px;height:20px;border-radius:10px;background:var(--bd2);border:none;position:relative;transition:background .2s;flex-shrink:0}
+.plan-toggle.on{background:var(--acc5)}
+.plan-toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:white;transition:transform .2s}
+.plan-toggle.on::after{transform:translateX(16px)}
+.plan-result{background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden}
+.plan-result-hd{padding:10px 14px;background:var(--s3);font-family:var(--fh);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--acc5);user-select:none}
+.plan-step-row{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bd);align-items:flex-start}
+.plan-step-row:last-child{border-bottom:none}
+.plan-step-time{font-family:var(--fh);font-size:.75rem;font-weight:700;color:var(--acc5);min-width:80px;flex-shrink:0;user-select:none}
+.plan-step-day{font-size:.62rem;color:var(--mut);margin-top:1px;user-select:none}
+.plan-step-info{flex:1}
+.plan-step-name{font-size:.85rem;color:var(--txt);font-weight:500}
+.plan-step-detail{font-size:.65rem;color:var(--txt2);margin-top:2px}
+.plan-night-marker{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(192,132,252,.06);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+.plan-night-line{flex:1;height:1px;background:rgba(192,132,252,.2)}
+.plan-night-txt{font-size:.62rem;color:var(--acc5);font-family:var(--fm);white-space:nowrap;user-select:none}
+
+/* ── TIMER ── */
+.timer-overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;pointer-events:none;opacity:0;transition:opacity .25s}
+.timer-overlay.open{pointer-events:all;opacity:1}
+.timer-bg{position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
+.timer-sheet{position:relative;width:100%;background:var(--s1);border-radius:20px 20px 0 0;border-top:1px solid var(--bd2);padding-bottom:max(28px,env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1)}
+.timer-overlay.open .timer-sheet{transform:translateY(0)}
+.timer-handle{width:36px;height:4px;background:var(--bd2);border-radius:2px;margin:12px auto 0}
+.timer-body{padding:20px 24px 10px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.timer-step-name{font-family:var(--fh);font-size:1rem;font-weight:800;color:var(--txt);text-align:center;user-select:none}
+.timer-ring{position:relative;width:160px;height:160px;margin:0 auto}
+.timer-ring svg{transform:rotate(-90deg)}
+.timer-ring-track{fill:none;stroke:var(--s3);stroke-width:8}
+.timer-ring-prog{fill:none;stroke:var(--acc3);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+.timer-ring-prog.done{stroke:var(--ok)}
+.timer-time-abs{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.timer-time-big{font-family:var(--fh);font-size:2rem;font-weight:800;color:var(--txt);line-height:1;user-select:none}
+.timer-time-end{font-size:.68rem;color:var(--mut);user-select:none}
+.timer-btns{display:flex;gap:10px;padding:0 24px}
+.tbtn{flex:1;height:50px;border-radius:14px;font-family:var(--fh);font-size:.9rem;font-weight:700;transition:.15s}
+.tbtn:active{transform:scale(.95)}
+.tbtn.pause{background:var(--s2);color:var(--txt);border:1px solid var(--bd2)}
+.tbtn.stop{background:rgba(255,79,122,.12);color:var(--emp);border:1px solid rgba(255,79,122,.3)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.done-pulse{animation:pulse 1s ease infinite}
+
+/* ── CONFIRM ── */
+.conf-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.conf-ov.open{opacity:1;pointer-events:all}
+.conf-box{background:var(--s1);border:1px solid var(--bd2);border-radius:20px;padding:22px;max-width:320px;width:100%;transform:scale(.9);transition:.2s}
+.conf-ov.open .conf-box{transform:scale(1)}
+.conf-box h3{font-family:var(--fh);font-size:1rem;margin-bottom:6px}
+.conf-box p{font-size:.78rem;color:var(--txt2);line-height:1.6;margin-bottom:18px}
+.conf-btns{display:flex;gap:10px}
+.cbtn{flex:1;height:46px;border-radius:12px;font-family:var(--fh);font-size:.85rem;font-weight:700;transition:.15s}
+.cbtn:active{transform:scale(.95)}
+.cbtn.can{background:var(--s2);color:var(--txt2);border:none}
+.cbtn.ok-del{background:rgba(255,79,122,.12);color:var(--emp);border:1px solid rgba(255,79,122,.3)}
+.cbtn.ok-cook{background:rgba(192,132,252,.15);color:var(--acc5);border:1px solid rgba(192,132,252,.3)}
+
+/* ── THEME PANEL ── */
+.theme-panel{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;pointer-events:none;opacity:0;transition:opacity .25s}
+.theme-panel.open{pointer-events:all;opacity:1}
+.tp-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+.tp-sheet{position:relative;width:100%;background:var(--s1);border-radius:20px 20px 0 0;border-top:1px solid var(--bd2);padding-bottom:max(24px,env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1)}
+.theme-panel.open .tp-sheet{transform:translateY(0)}
+.tp-handle{width:36px;height:4px;background:var(--bd2);border-radius:2px;margin:12px auto 0}
+.tp-title{font-family:var(--fh);font-size:1rem;font-weight:800;padding:14px 18px 0;color:var(--txt)}
+.tp-body{padding:16px 18px;display:flex;flex-direction:column;gap:18px}
+.tp-section-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);margin-bottom:8px;user-select:none}
+.tp-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tp-mode{border-radius:12px;border:2px solid var(--bd);padding:12px 8px;text-align:center;transition:all .15s;background:var(--s2)}
+.tp-mode:active{transform:scale(.95)}
+.tp-mode.active{border-color:var(--acc)}
+.tp-mode-icon{font-size:1.4rem;margin-bottom:4px}
+.tp-mode-label{font-family:var(--fh);font-size:.72rem;font-weight:700;color:var(--txt);user-select:none}
+.tp-accents{display:flex;gap:10px;flex-wrap:wrap}
+.tp-accent{width:40px;height:40px;border-radius:50%;border:3px solid transparent;position:relative;flex-shrink:0;transition:all .15s}
+.tp-accent:active{transform:scale(.9)}
+.tp-accent.active{border-color:var(--txt);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--txt)}
+.tp-accent::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:rgba(0,0,0,.6);opacity:0}
+.tp-accent.active::after{opacity:1}
+
+/* ── EMPTY / TOAST ── */
+.es{text-align:center;padding:50px 20px;color:var(--mut)}
+.es .ei{font-size:3rem;margin-bottom:10px}
+.es p{font-size:.82rem;line-height:1.7}
+#toast{position:fixed;bottom:calc(var(--nav) + env(safe-area-inset-bottom,0px) + 12px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--s3);border:1px solid var(--bd2);color:var(--txt);padding:10px 20px;border-radius:24px;font-size:.78rem;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:100;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="safe-top"></div>
+  <div class="hdr">
+    <div class="logo">Mengen<span class="dot">.</span>App<span class="sub">& Rezepte</span></div>
+    <button class="hbtn" onclick="openThemePanel()">🎨</button>
+    <button class="hbtn" id="install-hbtn" style="display:none" onclick="triggerInstall()">⊕</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active"     id="tab-bestand" onclick="showTab('bestand')">📦 Bestand</button>
+    <button class="tab recipe-tab" id="tab-rezepte" onclick="showTab('rezepte')">🍳 Rezepte</button>
+    <button class="tab shop-tab"   id="tab-einkauf" onclick="showTab('einkauf')">🛒 Einkauf</button>
+    <button class="tab"            id="tab-io"      onclick="showTab('io')">⇅ Export</button>
+  </div>
+  <div class="scroll" id="scroll">
+
+    <!-- BESTAND -->
+    <div class="view active" id="view-bestand">
+      <div class="stats" id="stats"></div>
+      <div class="sbar">
+        <div class="sw"><span class="si">⌕</span><input type="text" id="search" placeholder="Suchen …" oninput="renderBestand()"></div>
+        <button class="fbtn" id="ftoggle" onclick="toggleFilter()">≡</button>
+      </div>
+      <div class="fp" id="fp">
+        <div class="flbl">Status</div>
+        <div class="chip-row" id="sc-chips"></div>
+        <div class="flbl">Kategorie</div>
+        <div class="chip-row" id="cc-chips"></div>
+      </div>
+      <div class="ilist" id="ilist"></div>
+    </div>
+
+    <!-- REZEPTE -->
+    <div class="view" id="view-rezepte">
+      <div class="sbar">
+        <div class="sw"><span class="si">⌕</span><input type="text" id="rsearch" placeholder="Rezepte suchen …" oninput="renderRezepte()"></div>
+      </div>
+      <div class="rlist" id="rlist"></div>
+    </div>
+
+    <!-- EINKAUF -->
+    <div class="view" id="view-einkauf">
+      <div class="shop-header">
+        <span class="shop-title">🛒 Einkaufsliste</span>
+        <button class="shop-clear" onclick="clearShopList()">Alles löschen</button>
+      </div>
+      <div id="shop-summary-wrap"></div>
+      <div id="shoplist-wrap"></div>
+    </div>
+
+    <!-- IO -->
+    <div class="view" id="view-io">
+      <div class="io-card">
+        <div class="io-title">📤 Exportieren</div>
+        <div class="io-desc">Bestand und Rezepte als JSON-Backup speichern.</div>
+        <button class="io-btn" onclick="exportJSON()">🗃 JSON exportieren</button>
+        <button class="io-btn" onclick="exportCSV()">📄 Bestand als CSV</button>
+      </div>
+      <div class="io-card">
+        <div class="io-title">📥 JSON Backup einspielen</div>
+        <div class="io-desc">JSON-Inhalt aus Backup einfügen:</div>
+        <textarea class="io-paste" id="json-paste" placeholder='{"items":[…],"recipes":[…]}'></textarea>
+        <button class="io-btn" onclick="importJSONText()">📥 Wiederherstellen</button>
+      </div>
+      <div class="io-card">
+        <div class="io-title">📥 CSV Bestand importieren</div>
+        <div class="io-desc">Format: <code style="color:var(--acc3)">name,qty,unit,cat,min</code></div>
+        <textarea class="io-paste" id="csv-paste" placeholder="Mehl,500,g,Backzutaten,200"></textarea>
+        <button class="io-btn" onclick="importCSVText()">📥 CSV importieren</button>
+      </div>
+      <div class="io-card" style="border-color:rgba(255,79,122,.25)">
+        <div class="io-title" style="color:var(--emp)">⚠ Daten löschen</div>
+        <button class="io-btn" style="background:rgba(255,79,122,.08);border-color:rgba(255,79,122,.3);color:var(--emp)" onclick="clearAll()">Alle Daten löschen</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="fab" id="fab" onclick="fabAction()">+</button>
+  <div class="bnav">
+    <button class="ni active"  id="nav-bestand" onclick="showTab('bestand')"><span class="ni-ic">📦</span><span class="ni-lb">Bestand</span></button>
+    <button class="ni recipe"  id="nav-rezepte" onclick="showTab('rezepte')"><span class="ni-ic">🍳</span><span class="ni-lb">Rezepte</span></button>
+    <button class="ni shop"    id="nav-einkauf" onclick="showTab('einkauf')"><span class="ni-ic">🛒</span><span class="ni-lb">Einkauf</span></button>
+    <button class="ni"         id="nav-io"      onclick="showTab('io')"><span class="ni-ic">⇅</span><span class="ni-lb">Export</span></button>
+  </div>
+</div>
+
+<!-- BESTAND SHEET -->
+<div class="overlay" id="ov-bestand" onclick="closeSheet('bestand')"></div>
+<div class="sheet" id="sh-bestand">
+  <div class="sh-handle"></div>
+  <div class="sh-title" id="sh-bestand-title">Neuer Artikel</div>
+  <div class="sh-body">
+    <div class="sf"><label>Bezeichnung *</label><input type="text" id="b-name" placeholder="z.B. Mehl Type 405" autocomplete="off"></div>
+    <div class="sf-row">
+      <div class="sf"><label>Menge</label><input type="number" id="b-qty" value="0" min="0" inputmode="decimal"></div>
+      <div class="sf"><label>Einheit</label><select id="b-unit"><option>Stk</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>m</option><option>cm</option><option>m²</option><option>Pkg</option><option>Krt</option></select></div>
+    </div>
+    <div class="sf-row">
+      <div class="sf"><label>Kategorie</label>
+        <div class="cat-combo-wrap"><select class="cat-combo-select" id="b-cat-sel"></select><div class="cat-combo-sep"></div><button class="cat-combo-new" onclick="toggleNewCat('b')">+ Neu</button></div>
+        <div class="cat-new-row" id="b-cat-new"><input type="text" id="b-cat-new-inp" placeholder="Neue Kategorie …"><button class="cat-new-confirm" onclick="confirmNewCat('b')">✓</button><button class="cat-new-cancel" onclick="cancelNewCat('b')">✕</button></div>
+      </div>
+      <div class="sf"><label>Mindestbestand</label><input type="number" id="b-min" value="0" min="0" inputmode="decimal"></div>
+    </div>
+  </div>
+  <div class="sh-acts">
+    <button class="shbtn s" onclick="closeSheet('bestand')">Abbrechen</button>
+    <button class="shbtn p" onclick="saveBestand()">Speichern</button>
+  </div>
+</div>
+
+<!-- REZEPT SHEET -->
+<div class="overlay" id="ov-rezept" onclick="closeSheet('rezept')"></div>
+<div class="sheet" id="sh-rezept">
+  <div class="sh-handle"></div>
+  <div class="sh-title" id="sh-rezept-title">Neues Rezept</div>
+  <div class="sh-body">
+    <!-- Image upload -->
+    <div class="sf"><label>Foto (optional)</label>
+      <div class="img-upload-zone" id="img-zone">
+        <img id="img-preview" class="img-upload-preview" style="display:none" alt="">
+        <div class="img-upload-hint" id="img-hint"><span class="emoji">📷</span><span>Tippe für ein Foto</span></div>
+        <button class="img-remove-btn" id="img-remove-btn" style="display:none" onclick="removeImage()">✕</button>
+        <input class="img-upload-inp" type="file" accept="image/*" id="img-inp" onchange="handleImageUpload(this)">
+      </div>
+    </div>
+    <div class="sf"><label>Rezeptname *</label><input type="text" id="r-name" placeholder="z.B. Rührkuchen" autocomplete="off"></div>
+    <div class="sf"><label>Beschreibung</label><textarea id="r-desc" placeholder="Kurze Beschreibung …"></textarea></div>
+    <div class="sf-row">
+      <div class="sf"><label>Portionen</label><input type="number" id="r-portions" value="1" min="1" inputmode="decimal"></div>
+      <div class="sf"><label>Einheit</label><input type="text" id="r-portlabel" placeholder="Portionen"></div>
+    </div>
+    <div class="sf"><label>Zutaten</label>
+      <div class="ingr-editor" id="ingr-editor"></div>
+      <button class="add-ingr-btn" onclick="addIngrRow()">+ Zutat hinzufügen</button>
+    </div>
+    <div class="sf"><label>Arbeitsschritte</label>
+      <div class="step-editor" id="step-editor"></div>
+      <button class="add-step-btn" onclick="addStepRow()">+ Schritt hinzufügen</button>
+    </div>
+  </div>
+  <div class="sh-acts">
+    <button class="shbtn s" onclick="closeSheet('rezept')">Abbrechen</button>
+    <button class="shbtn p" onclick="saveRezept()">Speichern</button>
+  </div>
+</div>
+
+<!-- SHARE SHEET -->
+<div class="overlay" id="ov-share" onclick="closeSheet('share')"></div>
+<div class="sheet" id="sh-share">
+  <div class="sh-handle"></div>
+  <div class="sh-title">📤 Rezept teilen</div>
+  <div class="share-sheet-body">
+    <div class="share-preview" id="share-preview"></div>
+    <div id="share-text-wrap" style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)">Rezepttext (zum Kopieren)</div>
+      <div class="share-text-area" id="share-text-content"></div>
+    </div>
+    <div class="share-btns">
+      <button class="share-btn primary" onclick="doShare()">📤 Teilen</button>
+      <button class="share-btn" onclick="copyShareText()">📋 Kopieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- BACKPLAN PANEL -->
+<div class="plan-panel" id="plan-panel">
+  <div class="plan-overlay" onclick="closePlanPanel()"></div>
+  <div class="plan-sheet">
+    <div class="plan-handle"></div>
+    <div class="plan-title" id="plan-title">📅 Backplan</div>
+    <div class="plan-body">
+      <div>
+        <div class="plan-section-label">Startzeit</div>
+        <input type="datetime-local" id="plan-start" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);color:var(--txt);font-family:var(--fm);font-size:.82rem;outline:none;-webkit-appearance:none">
+      </div>
+      <div>
+        <div class="plan-section-label">Verfügbare Zeiten</div>
+        <div class="plan-avail-grid" id="plan-avail-grid"></div>
+      </div>
+      <button onclick="calculatePlan()" style="width:100%;height:48px;border-radius:12px;background:var(--acc5);color:#fff;font-family:var(--fh);font-size:.88rem;font-weight:700;border:none">📅 Plan berechnen</button>
+      <div id="plan-result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER -->
+<div class="timer-overlay" id="timer-overlay">
+  <div class="timer-bg" onclick="closeTimer()"></div>
+  <div class="timer-sheet">
+    <div class="timer-handle"></div>
+    <div class="timer-body">
+      <div class="timer-step-name" id="timer-step-name">Timer</div>
+      <div class="timer-ring">
+        <svg width="160" height="160" viewBox="0 0 160 160">
+          <circle class="timer-ring-track" cx="80" cy="80" r="68"/>
+          <circle class="timer-ring-prog" id="timer-ring-prog" cx="80" cy="80" r="68" stroke-dasharray="427" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-time-abs">
+          <div class="timer-time-big" id="timer-time-big">00:00</div>
+          <div class="timer-time-end" id="timer-time-end"></div>
+        </div>
+      </div>
+    </div>
+    <div class="timer-btns">
+      <button class="tbtn pause" id="timer-pause-btn" onclick="toggleTimerPause()">⏸ Pause</button>
+      <button class="tbtn stop" onclick="closeTimer()">✕ Stopp</button>
+    </div>
+    <div style="height:12px"></div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="conf-ov" id="conf-ov">
+  <div class="conf-box">
+    <h3 id="conf-title">Bestätigung</h3>
+    <p id="conf-msg"></p>
+    <div class="conf-btns">
+      <button class="cbtn can" onclick="closeConf()">Abbrechen</button>
+      <button class="cbtn ok-del" id="conf-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- THEME PANEL -->
+<div class="theme-panel" id="theme-panel">
+  <div class="tp-overlay" onclick="closeThemePanel()"></div>
+  <div class="tp-sheet">
+    <div class="tp-handle"></div>
+    <div class="tp-title">🎨 Design anpassen</div>
+    <div class="tp-body">
+      <div>
+        <div class="tp-section-label">Modus</div>
+        <div class="tp-modes">
+          <div class="tp-mode" id="mode-night" onclick="setTheme('night')"><div class="tp-mode-icon">🌙</div><div class="tp-mode-label">Nacht</div></div>
+          <div class="tp-mode" id="mode-day"   onclick="setTheme('day')"><div class="tp-mode-icon">☀️</div><div class="tp-mode-label">Tag</div></div>
+          <div class="tp-mode" id="mode-sepia" onclick="setTheme('sepia')"><div class="tp-mode-icon">📜</div><div class="tp-mode-label">Sepia</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="tp-section-label">Akzentfarbe</div>
+        <div class="tp-accents">
+          <div class="tp-accent" id="acc-green"  onclick="setAccent('green')"  style="background:#4dffa0"></div>
+          <div class="tp-accent" id="acc-blue"   onclick="setAccent('blue')"   style="background:#4f9fff"></div>
+          <div class="tp-accent" id="acc-purple" onclick="setAccent('purple')" style="background:#c084fc"></div>
+          <div class="tp-accent" id="acc-orange" onclick="setAccent('orange')" style="background:#ffb84f"></div>
+          <div class="tp-accent" id="acc-pink"   onclick="setAccent('pink')"   style="background:#ff6eb4"></div>
+          <div class="tp-accent" id="acc-cyan"   onclick="setAccent('cyan')"   style="background:#22d3ee"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════
+const STORE = 'mengenapp_v3';
+let items=[], recipes=[], shopList=[], nextItemId=1, nextRecipeId=1;
+let customCats=[];
+
+function loadData(){
+  try{
+    const d=JSON.parse(localStorage.getItem(STORE)||'null');
+    if(d){items=d.items||[];recipes=d.recipes||[];shopList=d.shopList||[];
+      nextItemId=d.nextItemId||(items.length?Math.max(...items.map(i=>i.id))+1:1);
+      nextRecipeId=d.nextRecipeId||(recipes.length?Math.max(...recipes.map(r=>r.id))+1:1);
+      return;}
+  }catch(e){}
+  // Demo data
+  items=[
+    {id:1,name:'Mehl Type 405',cat:'Backzutaten',qty:2000,unit:'g',min:500},
+    {id:2,name:'Zucker',cat:'Backzutaten',qty:800,unit:'g',min:200},
+    {id:3,name:'Butter',cat:'Kühlwaren',qty:250,unit:'g',min:100},
+    {id:4,name:'Eier',cat:'Kühlwaren',qty:6,unit:'Stk',min:4},
+    {id:5,name:'Milch',cat:'Kühlwaren',qty:1,unit:'L',min:0},
+    {id:6,name:'Backpulver',cat:'Backzutaten',qty:15,unit:'g',min:0},
+    {id:7,name:'Salz',cat:'Gewürze',qty:500,unit:'g',min:100},
+    {id:8,name:'Vanillezucker',cat:'Backzutaten',qty:2,unit:'Stk',min:0},
+  ];
+  recipes=[
+    {id:1,name:'Rührkuchen',desc:'Klassischer Rührkuchen',portions:1,portLabel:'Kuchen',image:null,
+      ingredients:[{itemId:1,qty:250},{itemId:2,qty:200},{itemId:3,qty:125},{itemId:4,qty:4},{itemId:6,qty:1},{itemId:8,qty:1}],
+      steps:[
+        {name:'Butter & Zucker schaumig schlagen',workMin:10,waitMin:0,overnight:false,note:'Butter Zimmertemperatur'},
+        {name:'Eier unterrühren',workMin:5,waitMin:0,overnight:false,note:''},
+        {name:'Mehl & Backpulver unterheben',workMin:5,waitMin:0,overnight:false,note:''},
+        {name:'Im Ofen backen',workMin:5,waitMin:50,overnight:false,note:'180°C Umluft'},
+        {name:'Abkühlen lassen',workMin:2,waitMin:30,overnight:false,note:''},
+      ]},
+    {id:2,name:'Sauerteigbrot',desc:'Über 2 Tage',portions:1,portLabel:'Laib',image:null,
+      ingredients:[{itemId:1,qty:500},{itemId:7,qty:10}],
+      steps:[
+        {name:'Vorteig ansetzen',workMin:15,waitMin:0,overnight:true,note:'Starter + Mehl + Wasser'},
+        {name:'Hauptteig kneten',workMin:20,waitMin:60,overnight:false,note:'Salz zugeben'},
+        {name:'Falten & Stockgare',workMin:10,waitMin:240,overnight:false,note:'Alle 30 Min falten'},
+        {name:'Formen & Stückgare',workMin:10,waitMin:0,overnight:true,note:'Gärkorb, kühl'},
+        {name:'Backen',workMin:10,waitMin:50,overnight:false,note:'250°C mit Dampf'},
+      ]},
+  ];
+  nextItemId=9;nextRecipeId=3;
+}
+
+function saveData(){
+  localStorage.setItem(STORE,JSON.stringify({items,recipes,shopList,nextItemId,nextRecipeId}));
+}
+
+// ══════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════
+function itemStatus(i){return i.qty===0?'empty':i.min>0&&i.qty<i.min?'low':'ok'}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function round2(n){return Math.round(n*100)/100}
+function fmtDur(m){if(!m)return'0 Min';if(m<60)return m+' Min';const h=Math.floor(m/60),r=m%60;return r?`${h}h ${r}m`:`${h}h`}
+
+function recipeAvailability(r,factor=1){
+  let allOk=true,anyOk=false;
+  for(const ing of r.ingredients){
+    const it=items.find(i=>i.id===ing.itemId);const need=round2(ing.qty*factor);
+    if(!it)continue;
+    if(it.qty>=need)anyOk=true;else allOk=false;
+  }
+  return allOk?'yes':anyOk?'partial':'no';
+}
+function getIngrStatus(item,need){if(!item)return'na';if(item.qty>=need)return'ok';if(item.qty>0)return'low';return'empty'}
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+let activeTab='bestand';
+const fabCfg={
+  bestand:{cls:'',icon:'+',fn:()=>openSheet('bestand')},
+  rezepte:{cls:'recipe',icon:'+',fn:()=>openSheet('rezept')},
+  einkauf:{cls:'shop',icon:'✓',fn:checkAllShop},
+  io:{cls:'',icon:'',fn:null},
+};
+
+function showTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+  const fab=document.getElementById('fab');
+  const c=fabCfg[tab];
+  fab.className='fab'+(c.cls?' '+c.cls:'');
+  fab.textContent=c.icon;
+  fab.style.display=(tab==='io'||!c.icon)?'none':'flex';
+  document.getElementById('scroll').scrollTop=0;
+  if(tab==='rezepte')renderRezepte();
+  if(tab==='einkauf')renderEinkauf();
+}
+function fabAction(){const c=fabCfg[activeTab];if(c&&c.fn)c.fn()}
+
+// ══════════════════════════════════════
+//  BESTAND
+// ══════════════════════════════════════
+let filterStatus=null,filterCat=null;
+
+function renderBestand(){
+  updateStats();
+  const q=document.getElementById('search').value.toLowerCase();
+  const list=items.filter(i=>{
+    if(q&&!i.name.toLowerCase().includes(q)&&!i.cat.toLowerCase().includes(q))return false;
+    if(filterStatus&&itemStatus(i)!==filterStatus)return false;
+    if(filterCat&&i.cat!==filterCat)return false;
+    return true;
+  });
+  const el=document.getElementById('ilist');
+  if(!list.length){el.innerHTML='<div class="es"><div class="ei">🔍</div><p>Keine Artikel</p></div>';return}
+  el.innerHTML=list.map(item=>{
+    const st=itemStatus(item);
+    const pct=item.min>0?Math.min(100,Math.round(item.qty/item.min*100)):100;
+    return`<div class="icard">
+      <div class="ic-top">
+        <div class="ic-info"><div class="ic-name">${esc(item.name)}</div><div class="ic-cat">${esc(item.cat)}</div></div>
+        <div class="ic-acts">
+          <button class="ab e" onclick="openSheet('bestand',${item.id})">✎</button>
+          <button class="ab d" onclick="confirmDel('item',${item.id})">🗑</button>
+        </div>
+        <span class="badge ${st}">${{ok:'OK',low:'Niedrig',empty:'Leer'}[st]}</span>
+      </div>
+      <div class="ic-mid">
+        <div class="stepper">
+          <button class="sbtn m" onclick="chgQty(${item.id},-1)">−</button>
+          <div class="qdsp">${item.qty}<span class="qu">${esc(item.unit)}</span></div>
+          <button class="sbtn p" onclick="chgQty(${item.id},+1)">+</button>
+        </div>
+        <div class="prog">
+          <div class="pt"><div class="pf ${st}" style="width:${pct}%"></div></div>
+          <div class="pl">${item.min>0?'Soll: '+item.min+' '+item.unit:'kein Soll'}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats(){
+  const t=items.length,ok=items.filter(i=>itemStatus(i)==='ok').length,
+        low=items.filter(i=>itemStatus(i)==='low').length,emp=items.filter(i=>itemStatus(i)==='empty').length;
+  document.getElementById('stats').innerHTML=`
+    <div class="sc ca"><div class="sc-v">${t}</div><div class="sc-l">Gesamt</div></div>
+    <div class="sc co"><div class="sc-v">${ok}</div><div class="sc-l">OK</div></div>
+    <div class="sc cl"><div class="sc-v">${low}</div><div class="sc-l">Niedrig</div></div>
+    <div class="sc ce"><div class="sc-v">${emp}</div><div class="sc-l">Leer</div></div>`;
+}
+
+function chgQty(id,delta){
+  const i=items.find(x=>x.id===id);if(!i)return;
+  i.qty=Math.max(0,round2(i.qty+delta));
+  saveData();renderBestand();
+  if(activeTab==='rezepte')renderRezepte();
+}
+
+function toggleFilter(){
+  const p=document.getElementById('fp'),b=document.getElementById('ftoggle');
+  p.classList.toggle('open');b.classList.toggle('on',p.classList.contains('open'));
+  if(p.classList.contains('open'))buildChips();
+}
+
+function buildChips(){
+  const cats=[...new Set(items.map(i=>i.cat))].sort();
+  document.getElementById('sc-chips').innerHTML=
+    [{id:'ok',l:'OK'},{id:'low',l:'Niedrig'},{id:'empty',l:'Leer'}].map(s=>{
+      const cls=filterStatus===s.id?`chip on${s.id==='low'?' on-low':s.id==='empty'?' on-emp':''}` :'chip';
+      return`<button class="${cls}" onclick="setFStatus('${s.id}')">${s.l}</button>`;
+    }).join('');
+  document.getElementById('cc-chips').innerHTML=cats.map(c=>
+    `<button class="chip${filterCat===c?' on':''}" onclick="setFCat(\`${c.replace(/`/g,"'")}\`)">${esc(c)}</button>`
+  ).join('');
+}
+function setFStatus(s){filterStatus=filterStatus===s?null:s;buildChips();renderBestand()}
+function setFCat(c){filterCat=filterCat===c?null:c;buildChips();renderBestand()}
+
+// ══════════════════════════════════════
+//  REZEPTE
+// ══════════════════════════════════════
+const portFactors={};
+
+function renderRezepte(){
+  const q=document.getElementById('rsearch').value.toLowerCase();
+  const list=recipes.filter(r=>!q||r.name.toLowerCase().includes(q)||(r.desc||'').toLowerCase().includes(q));
+  const el=document.getElementById('rlist');
+  if(!list.length){el.innerHTML='<div class="es"><div class="ei">🍳</div><p>Noch keine Rezepte.<br>Tippe + um eines anzulegen.</p></div>';return}
+  el.innerHTML=list.map(r=>{
+    const factor=(portFactors[r.id]||1)/(r.portions||1);
+    const avail=recipeAvailability(r,factor);
+    const availLabel={yes:'✓ Kochbar',partial:'~ Teilweise',no:'✗ Fehlt'}[avail];
+    const ingrRows=r.ingredients.map(ing=>{
+      const item=items.find(i=>i.id===ing.itemId);
+      const need=round2(ing.qty*factor);
+      const st=getIngrStatus(item,need);
+      return`<div class="ingr-row">
+        <div class="ingr-dot ${st}"></div>
+        <div class="ingr-name">${esc(item?.name||'Unbekannt')}</div>
+        <div class="ingr-need ${st}">${need} ${esc(item?.unit||'')}</div>
+        <div class="ingr-stock">${item?item.qty+' '+item.unit+' vorhanden':'–'}</div>
+      </div>`;
+    }).join('');
+    const stepsHtml=(r.steps||[]).length?`
+      <div class="steps-section">
+        <div class="steps-hd"><span>Arbeitsschritte</span><button class="plan-btn" onclick="openPlanPanel(${r.id})">📅 Backplan</button></div>
+        ${(r.steps||[]).map((s,i)=>`<div class="step-row">
+          <div class="step-circle">${i+1}</div>
+          <div class="step-body">
+            <div class="step-title">${esc(s.name)}</div>
+            <div class="step-meta">
+              ${s.workMin?`<span class="step-tag work">⚡ ${fmtDur(s.workMin)}</span>`:''}
+              ${s.waitMin?`<span class="step-tag wait">⏳ ${fmtDur(s.waitMin)}</span>`:''}
+              ${s.overnight?`<span class="step-tag night">🌙 Über Nacht</span>`:''}
+            </div>
+            ${s.note?`<div class="step-note">${esc(s.note)}</div>`:''}
+          </div>
+          ${s.workMin?`<button class="step-timer-btn" onclick="startTimer(${r.id},${i})">⏱</button>`:''}
+        </div>`).join('')}
+      </div>`:'';
+    const curPort=portFactors[r.id]||r.portions||1;
+    const imgHtml=r.image
+      ?`<img class="rcard-img" src="${r.image}" alt="${esc(r.name)}">`
+      :`<div class="rcard-img-placeholder" onclick="openSheet('rezept',${r.id})">
+          📷<span class="add-img-hint">Bild hinzufügen</span>
+        </div>`;
+    return`<div class="rcard" id="rcard-${r.id}">
+      ${imgHtml}
+      <div class="rcard-top">
+        <div class="rcard-head">
+          <div class="rcard-info">
+            <div class="rcard-name">${esc(r.name)}</div>
+            ${r.desc?`<div class="rcard-desc">${esc(r.desc)}</div>`:''}
+          </div>
+          <span class="rcard-avail ${avail}">${availLabel}</span>
+        </div>
+      </div>
+      <div class="portion-bar">
+        <div class="portion-label">Portionen (Basis: ${r.portions||1} ${esc(r.portLabel||'')})</div>
+        <div class="portion-ctrl">
+          <button class="psbtn" onclick="changePortion(${r.id},-1)">−</button>
+          <div class="pval">${curPort}</div>
+          <button class="psbtn" onclick="changePortion(${r.id},+1)">+</button>
+        </div>
+      </div>
+      <div class="ingr-list">${ingrRows}</div>
+      ${stepsHtml}
+      <div class="rcard-acts">
+        <button class="ract cook"  onclick="confirmCook(${r.id})">🍳 Kochen</button>
+        <button class="ract shop"  onclick="addMissingToShop(${r.id})">🛒 Einkauf</button>
+        <button class="ract share" onclick="openShareSheet(${r.id})">📤 Teilen</button>
+        <button class="ract edit"  onclick="openSheet('rezept',${r.id})">✎</button>
+        <button class="ract del"   onclick="confirmDel('recipe',${r.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function changePortion(id,delta){
+  portFactors[id]=Math.max(1,(portFactors[id]||(recipes.find(r=>r.id===id)?.portions||1))+delta);
+  renderRezepte();
+}
+
+function confirmCook(id){
+  const r=recipes.find(x=>x.id===id);if(!r)return;
+  const factor=(portFactors[id]||r.portions||1)/(r.portions||1);
+  if(recipeAvailability(r,factor)==='no'){toast('⚠ Nicht genug Zutaten');return}
+  const portCount=portFactors[id]||r.portions||1;
+  showConf('Kochen?',`${portCount} ${r.portLabel||'Einheiten'} "${r.name}" zubereiten?`,'ok-cook','🍳 Kochen',()=>{
+    r.ingredients.forEach(ing=>{
+      const it=items.find(i=>i.id===ing.itemId);
+      if(it)it.qty=Math.max(0,round2(it.qty-round2(ing.qty*factor)));
+    });
+    saveData();renderBestand();renderRezepte();
+    toast(`✓ "${r.name}" zubereitet`);
+  });
+}
+
+function addMissingToShop(id){
+  const r=recipes.find(x=>x.id===id);if(!r)return;
+  const factor=(portFactors[id]||r.portions||1)/(r.portions||1);
+  let added=0;
+  r.ingredients.forEach(ing=>{
+    const item=items.find(i=>i.id===ing.itemId);
+    const need=round2(ing.qty*factor);
+    const have=item?.qty||0;
+    const missing=round2(need-have);
+    if(missing<=0)return;
+    const ex=shopList.find(s=>s.itemId===ing.itemId);
+    if(ex){ex.qty=round2(Math.max(ex.qty,missing));ex.recipes=[...new Set([...(ex.recipes||[]),r.name])]}
+    else{shopList.push({id:Date.now()+Math.random(),itemId:ing.itemId,name:item?.name||'Unbekannt',qty:missing,unit:item?.unit||'',cat:item?.cat||'Sonstiges',done:false,recipes:[r.name]});added++}
+  });
+  saveData();
+  if(added===0){toast('✓ Alles vorhanden!')}
+  else{toast(`✓ ${added} Artikel zur Einkaufsliste`);showTab('einkauf')}
+}
+
+// ══════════════════════════════════════
+//  SHARE
+// ══════════════════════════════════════
+let shareRecipeId=null;
+
+function openShareSheet(id){
+  shareRecipeId=id;
+  const r=recipes.find(x=>x.id===id);if(!r)return;
+  const factor=(portFactors[id]||1)/(r.portions||1);
+
+  // Build preview
+  const imgHtml=r.image?`<img class="share-preview-img" src="${r.image}" alt="">`:
+    `<div style="background:var(--s3);border-radius:var(--rs);height:80px;display:flex;align-items:center;justify-content:center;font-size:2rem">🍳</div>`;
+
+  document.getElementById('share-preview').innerHTML=`
+    ${imgHtml}
+    <div class="share-preview-name">${esc(r.name)}</div>
+    <div class="share-preview-meta">${r.portions} ${esc(r.portLabel||'Portionen')}${r.desc?` · ${esc(r.desc)}`:''}</div>`;
+
+  // Build share text
+  const lines=[];
+  lines.push(`🍳 ${r.name}`);
+  if(r.desc)lines.push(r.desc);
+  lines.push(`\n📊 ${r.portions} ${r.portLabel||'Portionen'}`);
+
+  if(r.ingredients.length){
+    lines.push('\n🧂 Zutaten:');
+    r.ingredients.forEach(ing=>{
+      const item=items.find(i=>i.id===ing.itemId);
+      lines.push(`• ${round2(ing.qty*factor)} ${item?.unit||''} ${item?.name||'Unbekannt'}`);
+    });
+  }
+
+  if((r.steps||[]).length){
+    lines.push('\n📋 Zubereitung:');
+    r.steps.forEach((s,i)=>{
+      let step=`${i+1}. ${s.name}`;
+      const meta=[];
+      if(s.workMin)meta.push(`${fmtDur(s.workMin)} Arbeit`);
+      if(s.waitMin)meta.push(`${fmtDur(s.waitMin)} warten`);
+      if(s.overnight)meta.push('Über Nacht');
+      if(meta.length)step+=` (${meta.join(', ')})`;
+      if(s.note)step+=`\n   → ${s.note}`;
+      lines.push(step);
+    });
+  }
+  lines.push('\n— Geteilt aus MengenApp');
+
+  const shareText=lines.join('\n');
+  document.getElementById('share-text-content').textContent=shareText;
+  document.getElementById('share-text-content').dataset.raw=shareText;
+
+  openSheet('share');
+}
+
+async function doShare(){
+  const r=recipes.find(x=>x.id===shareRecipeId);if(!r)return;
+  const text=document.getElementById('share-text-content').dataset.raw||'';
+  if(navigator.share){
+    try{
+      const shareData={title:r.name,text};
+      // Try to share with image if available
+      if(r.image&&navigator.canShare){
+        try{
+          const resp=await fetch(r.image);
+          const blob=await resp.blob();
+          const file=new File([blob],'rezept.jpg',{type:blob.type});
+          if(navigator.canShare({files:[file]}))shareData.files=[file];
+        }catch(e){}
+      }
+      await navigator.share(shareData);
+      toast('✓ Geteilt!');
+      closeSheet('share');
+    }catch(e){if(e.name!=='AbortError')toast('⚠ Teilen nicht möglich')}
+  }else{
+    copyShareText();
+  }
+}
+
+function copyShareText(){
+  const text=document.getElementById('share-text-content').dataset.raw||'';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>toast('✓ Text kopiert!')).catch(()=>fallbackCopy(text));
+  }else{fallbackCopy(text)}
+}
+
+function fallbackCopy(text){
+  const el=document.createElement('textarea');
+  el.value=text;el.style.position='fixed';el.style.opacity='0';
+  document.body.appendChild(el);el.select();
+  try{document.execCommand('copy');toast('✓ Text kopiert!')}catch(e){toast('⚠ Bitte manuell kopieren')}
+  document.body.removeChild(el);
+}
+
+// ══════════════════════════════════════
+//  IMAGE UPLOAD
+// ══════════════════════════════════════
+let currentImageData=null;
+
+function handleImageUpload(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    currentImageData=e.target.result;
+    const prev=document.getElementById('img-preview');
+    prev.src=currentImageData;prev.style.display='block';
+    document.getElementById('img-hint').style.display='none';
+    document.getElementById('img-remove-btn').style.display='flex';
+    document.getElementById('img-zone').classList.add('has-img');
+  };
+  reader.readAsDataURL(file);
+  // Resize if very large
+  const img=new Image();
+  img.onload=()=>{
+    if(img.width>1200||img.height>1200){
+      const canvas=document.createElement('canvas');
+      const ratio=Math.min(1200/img.width,1200/img.height);
+      canvas.width=img.width*ratio;canvas.height=img.height*ratio;
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      currentImageData=canvas.toDataURL('image/jpeg',0.82);
+      document.getElementById('img-preview').src=currentImageData;
+    }
+  };
+  img.src=e?.target?.result||URL.createObjectURL(file);
+  reader.onload=e=>{
+    currentImageData=e.target.result;
+    const imgEl=new Image();
+    imgEl.onload=()=>{
+      if(imgEl.width>1200||imgEl.height>1200){
+        const canvas=document.createElement('canvas');
+        const ratio=Math.min(1200/imgEl.width,1200/imgEl.height);
+        canvas.width=imgEl.width*ratio;canvas.height=imgEl.height*ratio;
+        canvas.getContext('2d').drawImage(imgEl,0,0,canvas.width,canvas.height);
+        currentImageData=canvas.toDataURL('image/jpeg',0.82);
+      }
+      document.getElementById('img-preview').src=currentImageData;
+      document.getElementById('img-preview').style.display='block';
+      document.getElementById('img-hint').style.display='none';
+      document.getElementById('img-remove-btn').style.display='flex';
+      document.getElementById('img-zone').classList.add('has-img');
+    };
+    imgEl.src=currentImageData;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage(){
+  currentImageData=null;
+  document.getElementById('img-preview').src='';
+  document.getElementById('img-preview').style.display='none';
+  document.getElementById('img-hint').style.display='flex';
+  document.getElementById('img-remove-btn').style.display='none';
+  document.getElementById('img-zone').classList.remove('has-img');
+  document.getElementById('img-inp').value='';
+}
+
+// ══════════════════════════════════════
+//  EINKAUF
+// ══════════════════════════════════════
+function renderEinkauf(){
+  const sw=document.getElementById('shop-summary-wrap');
+  const lw=document.getElementById('shoplist-wrap');
+  if(!shopList.length){sw.innerHTML='';lw.innerHTML='<div class="es"><div class="ei">🛒</div><p>Leer.<br>Tippe bei einem Rezept auf 🛒 Einkauf</p></div>';return}
+  const total=shopList.length,done=shopList.filter(s=>s.done).length;
+  sw.innerHTML=`<div class="shop-summary"><div class="shop-sum-row"><span class="shop-sum-lbl">Gesamt</span><span class="shop-sum-val">${total} Artikel</span></div><div class="shop-sum-row"><span class="shop-sum-lbl">Erledigt</span><span class="shop-sum-val">${done} / ${total}</span></div></div>`;
+  const cats={};shopList.forEach(s=>{(cats[s.cat]=cats[s.cat]||[]).push(s)});
+  lw.innerHTML=`<div class="shoplist">${Object.entries(cats).map(([cat,si])=>`
+    <div class="shop-cat-group">
+      <div class="shop-cat-hd">${esc(cat)}</div>
+      ${si.map(s=>`<div class="shop-item${s.done?' done':''}" id="si-${s.id}">
+        <button class="shop-check" onclick="toggleShopItem('${s.id}')">${s.done?'✓':''}</button>
+        <div class="shop-item-info"><div class="shop-item-name">${esc(s.name)}</div><div class="shop-item-detail">${s.recipes?.length?'Für: '+s.recipes.join(', '):''}</div></div>
+        <div class="shop-qty">${s.qty} ${esc(s.unit)}</div>
+        <button class="shop-del" onclick="removeShopItem('${s.id}')">✕</button>
+      </div>`).join('')}
+    </div>`).join('')}</div>`;
+}
+
+function toggleShopItem(id){const s=shopList.find(x=>String(x.id)===String(id));if(!s)return;s.done=!s.done;saveData();renderEinkauf()}
+function removeShopItem(id){shopList=shopList.filter(x=>String(x.id)!==String(id));saveData();renderEinkauf()}
+function clearShopList(){if(!shopList.length)return;showConf('Einkaufsliste leeren?','Alle Einträge entfernen?','ok-del','Leeren',()=>{shopList=[];saveData();renderEinkauf();toast('Geleert')})}
+function checkAllShop(){const u=shopList.filter(s=>!s.done);if(!u.length){toast('Alles erledigt!');return}u.forEach(s=>s.done=true);saveData();renderEinkauf();toast(`✓ ${u.length} Artikel erledigt`)}
+
+// ══════════════════════════════════════
+//  SHEETS
+// ══════════════════════════════════════
+let editItemId=null,editRecipeId=null;
+
+function openSheet(type,id=null){
+  if(type==='bestand'){
+    editItemId=id;
+    const item=id?items.find(i=>i.id===id):null;
+    document.getElementById('sh-bestand-title').textContent=id?'Artikel bearbeiten':'Neuer Artikel';
+    document.getElementById('b-name').value=item?.name||'';
+    document.getElementById('b-qty').value=item?.qty??0;
+    document.getElementById('b-unit').value=item?.unit||'Stk';
+    document.getElementById('b-min').value=item?.min??0;
+    populateCatCombo('b',item?.cat||'Allgemein');
+    document.getElementById('ov-bestand').classList.add('open');
+    document.getElementById('sh-bestand').classList.add('open');
+    setTimeout(()=>document.getElementById('b-name').focus(),350);
+  }else if(type==='rezept'){
+    editRecipeId=id;
+    const r=id?recipes.find(x=>x.id===id):null;
+    document.getElementById('sh-rezept-title').textContent=id?'Rezept bearbeiten':'Neues Rezept';
+    document.getElementById('r-name').value=r?.name||'';
+    document.getElementById('r-desc').value=r?.desc||'';
+    document.getElementById('r-portions').value=r?.portions||1;
+    document.getElementById('r-portlabel').value=r?.portLabel||'Portionen';
+    // Image
+    currentImageData=r?.image||null;
+    const prev=document.getElementById('img-preview');
+    if(currentImageData){prev.src=currentImageData;prev.style.display='block';document.getElementById('img-hint').style.display='none';document.getElementById('img-remove-btn').style.display='flex';document.getElementById('img-zone').classList.add('has-img')}
+    else{prev.src='';prev.style.display='none';document.getElementById('img-hint').style.display='flex';document.getElementById('img-remove-btn').style.display='none';document.getElementById('img-zone').classList.remove('has-img')}
+    buildIngrEditor(r?.ingredients||[]);
+    buildStepEditor(r?.steps||[]);
+    document.getElementById('ov-rezept').classList.add('open');
+    document.getElementById('sh-rezept').classList.add('open');
+    setTimeout(()=>document.getElementById('r-name').focus(),350);
+  }else if(type==='share'){
+    document.getElementById('ov-share').classList.add('open');
+    document.getElementById('sh-share').classList.add('open');
+  }
+}
+
+function closeSheet(type){
+  if(type==='bestand'){
+    document.getElementById('ov-bestand').classList.remove('open');
+    document.getElementById('sh-bestand').classList.remove('open');
+    editItemId=null;
+  }else if(type==='rezept'){
+    document.getElementById('ov-rezept').classList.remove('open');
+    document.getElementById('sh-rezept').classList.remove('open');
+    editRecipeId=null;
+  }else if(type==='share'){
+    document.getElementById('ov-share').classList.remove('open');
+    document.getElementById('sh-share').classList.remove('open');
+  }
+}
+
+function saveBestand(){
+  const name=document.getElementById('b-name').value.trim();
+  if(!name){document.getElementById('b-name').focus();toast('Bitte Bezeichnung eingeben');return}
+  const qty=parseFloat(document.getElementById('b-qty').value)||0;
+  const unit=document.getElementById('b-unit').value;
+  const cat=getCatValue('b');
+  const min=parseFloat(document.getElementById('b-min').value)||0;
+  if(editItemId){const i=items.find(x=>x.id===editItemId);Object.assign(i,{name,qty,unit,cat,min});toast('✓ Gespeichert')}
+  else{items.push({id:nextItemId++,name,qty,unit,cat,min});toast('✓ Hinzugefügt')}
+  saveData();closeSheet('bestand');renderBestand();
+}
+
+// ══════════════════════════════════════
+//  INGREDIENT EDITOR
+// ══════════════════════════════════════
+let tempIngredients=[];
+
+function buildIngrEditor(ingrs){tempIngredients=ingrs.map(i=>({...i}));renderIngrEditor()}
+function renderIngrEditor(){
+  document.getElementById('ingr-editor').innerHTML=tempIngredients.map((ing,idx)=>{
+    const item=items.find(i=>i.id===ing.itemId);
+    return`<div class="ingr-edit-row">
+      <select onchange="updateIngr(${idx},'itemId',+this.value)" style="flex:1;min-width:0">
+        <option value="">– Artikel –</option>${items.map(i=>`<option value="${i.id}"${i.id===ing.itemId?' selected':''}>${esc(i.name)}</option>`).join('')}
+      </select>
+      <input type="number" value="${ing.qty||''}" min="0" step="0.1" inputmode="decimal" placeholder="Menge" onchange="updateIngr(${idx},'qty',+this.value)" style="width:60px;text-align:right">
+      <span class="iunit">${esc(item?.unit||'')}</span>
+      <span class="ingr-rm" onclick="removeIngr(${idx})">✕</span>
+    </div>`;
+  }).join('');
+}
+function addIngrRow(){tempIngredients.push({itemId:items[0]?.id||null,qty:0});renderIngrEditor()}
+function updateIngr(idx,key,val){tempIngredients[idx][key]=val;if(key==='itemId')renderIngrEditor()}
+function removeIngr(idx){tempIngredients.splice(idx,1);renderIngrEditor()}
+
+// ══════════════════════════════════════
+//  STEP EDITOR
+// ══════════════════════════════════════
+let tempSteps=[];
+
+function buildStepEditor(steps){tempSteps=(steps||[]).map(s=>({...s}));renderStepEditor()}
+function renderStepEditor(){
+  document.getElementById('step-editor').innerHTML=tempSteps.map((s,i)=>`
+    <div class="step-edit-card">
+      <div class="step-edit-top">
+        <span class="step-edit-num">${i+1}.</span>
+        <input class="step-edit-name" type="text" placeholder="Schrittname …" value="${esc(s.name||'')}" oninput="tempSteps[${i}].name=this.value">
+        <span class="step-rm" onclick="removeStep(${i})">✕</span>
+      </div>
+      <div class="step-edit-times">
+        <div class="step-time-field"><div class="step-time-label">Arbeitszeit</div>
+          <div class="step-time-wrap"><input type="number" min="0" value="${s.workMin||''}" placeholder="0" inputmode="numeric" oninput="tempSteps[${i}].workMin=+this.value||0"><span class="tu">Min</span></div>
+        </div>
+        <div class="step-time-field"><div class="step-time-label">Wartezeit</div>
+          <div class="step-time-wrap"><input type="number" min="0" value="${s.waitMin||''}" placeholder="0" inputmode="numeric" oninput="tempSteps[${i}].waitMin=+this.value||0"><span class="tu">Min</span></div>
+        </div>
+      </div>
+      <div class="step-overnight">
+        <input type="checkbox" id="ovn-${i}" ${s.overnight?'checked':''} onchange="tempSteps[${i}].overnight=this.checked">
+        <label for="ovn-${i}">🌙 Über Nacht</label>
+      </div>
+      <input class="step-note-input" type="text" placeholder="Notiz …" value="${esc(s.note||'')}" oninput="tempSteps[${i}].note=this.value">
+    </div>`).join('');
+}
+function addStepRow(){tempSteps.push({name:'',workMin:0,waitMin:0,overnight:false,note:''});renderStepEditor();setTimeout(()=>{const ins=document.querySelectorAll('.step-edit-name');ins[ins.length-1]?.focus()},100)}
+function removeStep(idx){tempSteps.splice(idx,1);renderStepEditor()}
+
+function saveRezept(){
+  const name=document.getElementById('r-name').value.trim();
+  if(!name){document.getElementById('r-name').focus();toast('Bitte Rezeptname eingeben');return}
+  const desc=document.getElementById('r-desc').value.trim();
+  const portions=parseInt(document.getElementById('r-portions').value)||1;
+  const portLabel=document.getElementById('r-portlabel').value.trim()||'Portionen';
+  const ingredients=tempIngredients.filter(i=>i.itemId&&i.qty>0);
+  if(!ingredients.length){toast('Bitte mindestens eine Zutat');return}
+  const steps=tempSteps.filter(s=>s.name.trim());
+  if(editRecipeId){
+    const r=recipes.find(x=>x.id===editRecipeId);
+    Object.assign(r,{name,desc,portions,portLabel,ingredients,steps,image:currentImageData});
+    delete portFactors[editRecipeId];
+    toast('✓ Rezept gespeichert');
+  }else{
+    recipes.push({id:nextRecipeId++,name,desc,portions,portLabel,ingredients,steps,image:currentImageData});
+    toast('✓ Rezept angelegt');
+  }
+  saveData();closeSheet('rezept');renderRezepte();
+}
+
+// ══════════════════════════════════════
+//  CATEGORY COMBO
+// ══════════════════════════════════════
+function getAllCats(){
+  return [...new Set([...items.map(i=>i.cat).filter(Boolean),...customCats,'Allgemein'])].sort();
+}
+function populateCatCombo(prefix,selected='Allgemein'){
+  const sel=document.getElementById(`${prefix}-cat-sel`);if(!sel)return;
+  const cats=getAllCats();
+  if(selected&&!cats.includes(selected))cats.push(selected);
+  cats.sort();
+  sel.innerHTML=cats.map(c=>`<option value="${esc(c)}"${c===selected?' selected':''}>${esc(c)}</option>`).join('');
+  cancelNewCat(prefix);
+}
+function getCatValue(prefix){return document.getElementById(`${prefix}-cat-sel`)?.value||'Allgemein'}
+function toggleNewCat(prefix){
+  const w=document.getElementById(`${prefix}-cat-new`);w.classList.toggle('open');
+  if(w.classList.contains('open'))document.getElementById(`${prefix}-cat-new-inp`).focus();
+}
+function confirmNewCat(prefix){
+  const inp=document.getElementById(`${prefix}-cat-new-inp`);
+  const val=inp.value.trim();if(!val){inp.focus();return}
+  if(!customCats.includes(val))customCats.push(val);
+  localStorage.setItem('ma_custom_cats',JSON.stringify(customCats));
+  populateCatCombo(prefix,val);
+  toast(`✓ "${val}" angelegt`);
+}
+function cancelNewCat(prefix){
+  const w=document.getElementById(`${prefix}-cat-new`);if(w)w.classList.remove('open');
+  const i=document.getElementById(`${prefix}-cat-new-inp`);if(i)i.value='';
+}
+
+// ══════════════════════════════════════
+//  CONFIRM
+// ══════════════════════════════════════
+let confCb=null;
+function showConf(title,msg,btnCls,btnTxt,cb){
+  document.getElementById('conf-title').textContent=title;
+  document.getElementById('conf-msg').textContent=msg;
+  const ok=document.getElementById('conf-ok');ok.className='cbtn '+btnCls;ok.textContent=btnTxt;
+  document.getElementById('conf-ov').classList.add('open');confCb=cb;
+}
+function closeConf(){document.getElementById('conf-ov').classList.remove('open');confCb=null}
+document.getElementById('conf-ok').addEventListener('click',()=>{if(confCb)confCb();closeConf()});
+
+function confirmDel(type,id){
+  const name=type==='item'?items.find(i=>i.id===id)?.name:recipes.find(r=>r.id===id)?.name;
+  showConf('Löschen?',`"${name}" wirklich löschen?`,'ok-del','Löschen',()=>{
+    if(type==='item'){items=items.filter(i=>i.id!==id);renderBestand()}
+    else{recipes=recipes.filter(r=>r.id!==id);renderRezepte()}
+    saveData();toast('Gelöscht');
+  });
+}
+
+// ══════════════════════════════════════
+//  BACKPLAN
+// ══════════════════════════════════════
+let planRecipeId=null;
+const DAYS_FULL=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+let availSlots={};
+
+function openPlanPanel(id){
+  planRecipeId=id;
+  const r=recipes.find(x=>x.id===id);
+  document.getElementById('plan-title').textContent=`📅 Backplan: ${r?.name||''}`;
+  const now=new Date();now.setMinutes(0,0,0);now.setHours(now.getHours()+1);
+  document.getElementById('plan-start').value=toLocal(now);
+  buildAvailGrid();document.getElementById('plan-result').innerHTML='';
+  document.getElementById('plan-panel').classList.add('open');
+}
+function closePlanPanel(){document.getElementById('plan-panel').classList.remove('open')}
+function toLocal(d){const p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
+
+function buildAvailGrid(){
+  const start=new Date(document.getElementById('plan-start').value||Date.now());
+  const rows=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(start);d.setDate(d.getDate()+i);
+    const key=d.toDateString();
+    if(!availSlots[key])availSlots[key]={enabled:true,from:'08:00',to:'22:00'};
+    const slot=availSlots[key];
+    const label=i===0?'Heute':i===1?'Morgen':DAYS_FULL[d.getDay()]+' '+d.getDate()+'.';
+    rows.push(`<div class="plan-day-row">
+      <div class="plan-day-name">${label}</div>
+      <div class="plan-time-inputs" style="${slot.enabled?'':'opacity:.3;pointer-events:none'}">
+        <input type="time" value="${slot.from}" onchange="availSlots['${key}'].from=this.value">
+        <span class="plan-time-sep">–</span>
+        <input type="time" value="${slot.to}" onchange="availSlots['${key}'].to=this.value">
+      </div>
+      <button class="plan-toggle${slot.enabled?' on':''}" onclick="toggleAvail('${key}')"></button>
+    </div>`);
+  }
+  document.getElementById('plan-avail-grid').innerHTML=rows.join('');
+}
+function toggleAvail(key){availSlots[key].enabled=!availSlots[key].enabled;buildAvailGrid()}
+
+function calculatePlan(){
+  const r=recipes.find(x=>x.id===planRecipeId);
+  if(!r||(r.steps||[]).length===0){document.getElementById('plan-result').innerHTML='<div style="color:var(--mut);font-size:.8rem;text-align:center;padding:16px">Keine Schritte definiert.</div>';return}
+  const startVal=document.getElementById('plan-start').value;
+  if(!startVal){toast('Bitte Startzeit angeben');return}
+  let current=new Date(startVal);const planItems=[];
+  for(let i=0;i<r.steps.length;i++){
+    const s=r.steps[i];
+    current=findNextAvailable(current,s.workMin||0);
+    const workEnd=new Date(current.getTime()+(s.workMin||0)*60000);
+    planItems.push({step:s,idx:i,start:new Date(current),workEnd,overnight:s.overnight});
+    if(s.overnight){const next=new Date(current);next.setDate(next.getDate()+1);next.setHours(8,0,0,0);current=next}
+    else{current=new Date(workEnd.getTime()+(s.waitMin||0)*60000)}
+  }
+  renderPlanResult(planItems);
+}
+
+function findNextAvailable(dt,durMin){
+  const key=dt.toDateString();const slot=availSlots[key];
+  if(slot&&slot.enabled){
+    const[fh,fm]=slot.from.split(':').map(Number);const[th,tm]=slot.to.split(':').map(Number);
+    const dayStart=new Date(dt);dayStart.setHours(0,0,0,0);
+    const dtMs=dt.getTime()-dayStart.getTime();
+    const fromMs=(fh*60+fm)*60000;const toMs=(th*60+tm)*60000;
+    if(dtMs>=fromMs&&dtMs+durMin*60000<=toMs)return dt;
+    if(dtMs<fromMs){const r=new Date(dayStart.getTime()+fromMs);return r}
+  }
+  const next=new Date(dt);
+  for(let d=1;d<=14;d++){
+    next.setDate(next.getDate()+1);next.setHours(8,0,0,0);
+    const k=next.toDateString();const sl=availSlots[k];
+    if(!sl||sl.enabled){
+      if(sl){const[fh,fm]=sl.from.split(':').map(Number);next.setHours(fh,fm,0,0)}
+      return new Date(next);
+    }
+  }
+  return dt;
+}
+
+function renderPlanResult(planItems){
+  const ft=d=>d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const fd=d=>DAYS_FULL[d.getDay()]+' '+d.getDate()+'.'+(d.getMonth()+1)+'.';
+  let html=`<div class="plan-result"><div class="plan-result-hd">🗓 Dein Backplan</div>`;
+  planItems.forEach((pi,i)=>{
+    const detail=[pi.step.workMin?`⚡ ${fmtDur(pi.step.workMin)}`:'',pi.step.waitMin?`⏳ ${fmtDur(pi.step.waitMin)}`:'',pi.step.overnight?'🌙 Über Nacht':''].filter(Boolean).join(' · ');
+    html+=`<div class="plan-step-row"><div><div class="plan-step-time">${ft(pi.start)}</div><div class="plan-step-day">${fd(pi.start)}</div></div><div class="plan-step-info"><div class="plan-step-name">${i+1}. ${esc(pi.step.name)}</div>${detail?`<div class="plan-step-detail">${detail}</div>`:''}</div></div>`;
+    if(pi.overnight&&i<planItems.length-1)html+=`<div class="plan-night-marker"><div class="plan-night-line"></div><div class="plan-night-txt">🌙 Nachtruhe</div><div class="plan-night-line"></div></div>`;
+  });
+  const last=planItems[planItems.length-1];
+  if(last)html+=`<div style="padding:10px 14px;font-size:.72rem;color:var(--mut);border-top:1px solid var(--bd)">Fertig: <strong style="color:var(--ok)">${DAYS_FULL[last.workEnd.getDay()]}, ${last.workEnd.getDate()}.${last.workEnd.getMonth()+1}. ${ft(last.workEnd)}</strong></div>`;
+  html+=`</div>`;
+  document.getElementById('plan-result').innerHTML=html;
+}
+
+// ══════════════════════════════════════
+//  TIMER
+// ══════════════════════════════════════
+let timerInterval=null,timerEnd=null,timerTotal=0,timerPaused=false,timerRemaining=0;
+
+function startTimer(recipeId,stepIdx){
+  const r=recipes.find(x=>x.id===recipeId);const s=r?.steps?.[stepIdx];
+  if(!s||!s.workMin)return;
+  const secs=s.workMin*60;timerTotal=secs;timerRemaining=secs;timerPaused=false;
+  timerEnd=new Date(Date.now()+secs*1000);
+  document.getElementById('timer-step-name').textContent=`${stepIdx+1}. ${s.name}`;
+  document.getElementById('timer-time-end').textContent='Fertig um '+timerEnd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('timer-pause-btn').textContent='⏸ Pause';
+  document.getElementById('timer-ring-prog').classList.remove('done');
+  document.getElementById('timer-overlay').classList.add('open');
+  if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
+  clearInterval(timerInterval);timerInterval=setInterval(tickTimer,500);tickTimer();
+}
+
+function tickTimer(){
+  if(timerPaused)return;
+  timerRemaining=Math.max(0,Math.round((timerEnd.getTime()-Date.now())/1000));
+  const m=Math.floor(timerRemaining/60),s=timerRemaining%60;
+  document.getElementById('timer-time-big').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const pct=timerTotal>0?timerRemaining/timerTotal:0;
+  document.getElementById('timer-ring-prog').style.strokeDashoffset=427*pct;
+  if(timerRemaining<=0){
+    clearInterval(timerInterval);
+    document.getElementById('timer-time-big').textContent='Fertig!';
+    document.getElementById('timer-ring-prog').classList.add('done');
+    document.getElementById('timer-time-big').classList.add('done-pulse');
+    document.getElementById('timer-time-end').textContent='✓ Abgeschlossen';
+    if('Notification'in window&&Notification.permission==='granted')new Notification('⏱ Timer fertig!',{body:document.getElementById('timer-step-name').textContent,icon:'icon-192.png'});
+    if('vibrate'in navigator)navigator.vibrate([300,100,300,100,300]);
+    toast('⏱ Timer fertig!');
+  }
+}
+
+function toggleTimerPause(){
+  timerPaused=!timerPaused;
+  if(!timerPaused){timerEnd=new Date(Date.now()+timerRemaining*1000);document.getElementById('timer-time-end').textContent='Fertig um '+timerEnd.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}
+  document.getElementById('timer-pause-btn').textContent=timerPaused?'▶ Weiter':'⏸ Pause';
+}
+function closeTimer(){clearInterval(timerInterval);timerInterval=null;document.getElementById('timer-overlay').classList.remove('open');document.getElementById('timer-time-big').classList.remove('done-pulse')}
+
+// ══════════════════════════════════════
+//  EXPORT / IMPORT
+// ══════════════════════════════════════
+function exportJSON(){
+  dl('mengenapp_backup.json',JSON.stringify({items,recipes,shopList,nextItemId,nextRecipeId,exported:new Date().toISOString()},null,2),'application/json');
+  toast('✓ JSON exportiert');
+}
+function exportCSV(){
+  const rows=items.map(i=>[i.name,i.qty,i.unit,i.cat,i.min].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(','));
+  dl('bestand.csv',['name,qty,unit,cat,min',...rows].join('\n'),'text/csv');
+  toast('✓ CSV exportiert');
+}
+function importJSONText(){
+  const text=document.getElementById('json-paste').value.trim();
+  if(!text){toast('⚠ Bitte JSON einfügen');return}
+  showConf('JSON importieren','Alle Daten werden überschrieben!','ok-del','Importieren',()=>{
+    try{
+      const d=JSON.parse(text);
+      items=d.items||[];recipes=d.recipes||[];shopList=d.shopList||[];
+      nextItemId=d.nextItemId||(items.length?Math.max(...items.map(i=>i.id))+1:1);
+      nextRecipeId=d.nextRecipeId||(recipes.length?Math.max(...recipes.map(r=>r.id))+1:1);
+      saveData();document.getElementById('json-paste').value='';renderBestand();
+      toast(`✓ ${items.length} Artikel, ${recipes.length} Rezepte geladen`);
+    }catch(e){toast('⚠ Ungültiges JSON')}
+  });
+}
+function importCSVText(){
+  const text=document.getElementById('csv-paste').value.trim();
+  if(!text){toast('⚠ Bitte CSV einfügen');return}
+  try{
+    const lines=text.split('\n').filter(l=>l.trim());
+    const start=lines[0].toLowerCase().includes('name')?1:0;let n=0;
+    for(let i=start;i<lines.length;i++){
+      const c=parseCSVLine(lines[i]);if(!c[0])continue;
+      items.push({id:nextItemId++,name:c[0].trim(),qty:parseFloat(c[1])||0,unit:(c[2]||'Stk').trim(),cat:(c[3]||'Allgemein').trim(),min:parseFloat(c[4])||0});n++;
+    }
+    saveData();document.getElementById('csv-paste').value='';renderBestand();
+    toast(`✓ ${n} Artikel importiert`);
+  }catch(e){toast('⚠ Fehler')}
+}
+function parseCSVLine(l){const r=[];let c='',q=false;for(const ch of l){if(ch==='"')q=!q;else if(ch===','&&!q){r.push(c);c=''}else c+=ch}r.push(c);return r}
+function dl(name,content,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mime}));a.download=name;a.click();URL.revokeObjectURL(a.href)}
+function clearAll(){showConf('Alles löschen?','Bestand, Rezepte & Einkaufsliste werden gelöscht.','ok-del','Alles löschen',()=>{items=[];recipes=[];shopList=[];nextItemId=1;nextRecipeId=1;saveData();renderBestand();renderRezepte();renderEinkauf();toast('Daten gelöscht')})}
+
+// ══════════════════════════════════════
+//  THEME
+// ══════════════════════════════════════
+let currentTheme='night',currentAccent='green';
+function loadTheme(){currentTheme=localStorage.getItem('ma_theme')||'night';currentAccent=localStorage.getItem('ma_accent')||'green';applyTheme()}
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',currentTheme);
+  document.documentElement.setAttribute('data-accent',currentAccent);
+  const colors={night:'#0d1117',day:'#f0f2f7',sepia:'#f5f0e8'};
+  document.querySelector('meta[name="theme-color"]').content=colors[currentTheme];
+}
+function setTheme(t){currentTheme=t;localStorage.setItem('ma_theme',t);applyTheme();updateThemeUI()}
+function setAccent(a){currentAccent=a;localStorage.setItem('ma_accent',a);applyTheme();updateThemeUI();toast('✓ Farbe geändert')}
+function updateThemeUI(){
+  ['night','day','sepia'].forEach(t=>document.getElementById('mode-'+t)?.classList.toggle('active',currentTheme===t));
+  ['green','blue','purple','orange','pink','cyan'].forEach(a=>document.getElementById('acc-'+a)?.classList.toggle('active',currentAccent===a));
+}
+function openThemePanel(){document.getElementById('theme-panel').classList.add('open');updateThemeUI()}
+function closeThemePanel(){document.getElementById('theme-panel').classList.remove('open')}
+
+// ══════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════
+let toastT;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2500)}
+
+// ══════════════════════════════════════
+//  PWA
+// ══════════════════════════════════════
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('install-hbtn').style.display='flex'});
+function triggerInstall(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(r=>{if(r.outcome==='accepted')toast('✓ App wird installiert');deferredPrompt=null;document.getElementById('install-hbtn').style.display='none'})}
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+// ══════════════════════════════════════
+//  KEYBOARD
+// ══════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeSheet('bestand');closeSheet('rezept');closeSheet('share');closeConf();closeThemePanel();closePlanPanel();closeTimer()}
+  if(e.key==='Enter'&&e.target.id==='b-cat-new-inp'){e.preventDefault();confirmNewCat('b')}
+});
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+loadData();
+loadTheme();
+try{customCats=JSON.parse(localStorage.getItem('ma_custom_cats')||'[]')}catch(e){customCats=[]}
+renderBestand();
+</script>
+</body>
+</html>
